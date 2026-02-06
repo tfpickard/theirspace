@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f7f4ff;
+  --fg: #1b1b1b;
+  --card: #ffffff;
+  --border: #c3b5ff;
+  --accent: #ff7ad9;
+  --primary: #3a2b71;
+  --secondary: #7f63ff;
+  --muted: #f1ecff;
+  --font-headline: "Trebuchet MS", sans-serif;
+  --font-body: Georgia, serif;
+  --font-mono: "Courier New", monospace;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+}
+
+.myspace-grid {
+  background-image: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--border) 30%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      color-mix(in srgb, var(--border) 30%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 28px 28px;
+}
+
+.module-title {
+  font-family: var(--font-headline);
+  letter-spacing: 0.04em;
+}
+
+.badge-glow {
+  box-shadow: 0 0 0 2px var(--accent), 0 0 16px rgba(255, 122, 217, 0.45);
+}
+
+.scrollbar::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--accent) 40%, transparent);
+  border-radius: 999px;
+}

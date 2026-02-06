@@ -1,37 +1,17 @@
-# Contributing Guide
+# Contributing
 
-Thank you for building with this template. We prioritize **polished user experiences** and **production-quality engineering**.
+## Local Setup
+1. `cp .env.example .env`
+2. `pnpm install`
+3. `pnpm dev`
 
-## Principles
+## Quality Bar
+- `pnpm lint`
+- `pnpm typecheck`
+- `pnpm test`
 
-- **Design and UX matter**: ship delightful interfaces.
-- **Performance is a feature**: track budgets and guardrails.
-- **Accessibility is required**: keyboard + screen reader support.
-- **Security is baseline**: validate inputs, guard endpoints.
-
-## Development workflow
-
-1. Create a feature branch.
-2. Implement with tests and docs.
-3. Run the test suite and linting.
-4. Open a PR with clear context and screenshots for UI changes.
-
-## Code standards
-
-- Prefer **TypeScript** for JS/TS projects.
-- Prefer **Python** for backend systems.
-- Use **Bun or pnpm** for package management.
-- Keep modules small and cohesive.
-
-## Testing expectations
-
-- Unit tests for logic.
-- Integration tests for APIs.
-- Playwright for UI flows.
-
-## UI changes
-
-Always include:
-- Screenshot(s)
-- Accessibility notes
-- Performance considerations
+## Pull Requests
+- Add or update tests for changed behavior.
+- Run migrations for schema changes.
+- Keep API routes and UI in sync.
+- Document new env vars in `README.md`.

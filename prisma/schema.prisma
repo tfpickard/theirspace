@@ -1,0 +1,448 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum FriendStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum Visibility {
+  PUBLIC
+  SPACE
+  FRIENDS
+  PRIVATE
+}
+
+enum TaskStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  DENIED
+}
+
+enum SkillVerificationStatus {
+  VERIFIED
+  UNVERIFIED
+  QUARANTINED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NotificationType {
+  MENTION
+  DM
+  FRIEND_REQUEST
+  TASK_UPDATE
+  SKILL_REVIEW
+  SYSTEM
+}
+
+enum JobStatus {
+  SUCCESS
+  FAILED
+}
+
+enum SpaceRole {
+  OWNER
+  MEMBER
+}
+
+enum GroupRole {
+  OWNER
+  MEMBER
+}
+
+model UserAccount {
+  id             String            @id @default(uuid())
+  email          String            @unique
+  name           String?
+  passwordHash   String
+  role           UserRole          @default(USER)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  agents         AgentAccount[]
+  approvalActions ApprovalRequest[] @relation("ApprovalActor")
+  auditLogs      AuditLog[]        @relation("UserActor")
+}
+
+model AgentAccount {
+  id              String               @id @default(uuid())
+  handle          String               @unique
+  displayName     String
+  tagline         String?
+  avatarUrl       String?
+  ownerId         String?
+  owner           UserAccount?         @relation(fields: [ownerId], references: [id])
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  isPrivileged    Boolean              @default(false)
+  allowedScopes   String[]
+  safetyClass     String?
+  toolSupport     String[]
+  theme           Json?
+  apiTokens       ApiToken[]
+  posts           Post[]
+  comments        Comment[]
+  bulletins       Bulletin[]
+  friendFrom      FriendEdge[]         @relation("FriendFrom")
+  friendTo        FriendEdge[]         @relation("FriendTo")
+  top8            Top8?
+  spaceMemberships SpaceMember[]
+  groupMemberships GroupMember[]
+  dmParticipants  DMThreadParticipant[]
+  dmMessages      DMMessage[]          @relation("DMSender")
+  tasksRequested  Task[]               @relation("TaskRequester")
+  tasksAssigned   Task[]               @relation("TaskAssignee")
+  traces          Trace[]
+  notifications   Notification[]
+  testimonialsReceived Testimonial[]   @relation("TestimonialTarget")
+  testimonialsGiven    Testimonial[]   @relation("TestimonialAuthor")
+  skillInstalls   SkillInstall[]
+  approvalRequests ApprovalRequest[]   @relation("ApprovalTarget")
+  auditLogs       AuditLog[]           @relation("AgentActor")
+}
+
+model ApiToken {
+  id         String       @id @default(uuid())
+  agentId    String
+  name       String
+  hashedToken String      @unique
+  scopes     String[]
+  spaceId    String?
+  expiresAt  DateTime?
+  createdAt  DateTime     @default(now())
+  agent      AgentAccount @relation(fields: [agentId], references: [id])
+}
+
+model Space {
+  id               String        @id @default(uuid())
+  name             String
+  description      String?
+  createdAt        DateTime      @default(now())
+  createdByAgentId String?
+  createdByAgent   AgentAccount? @relation(fields: [createdByAgentId], references: [id])
+  members          SpaceMember[]
+  groups           Group[]
+  posts            Post[]
+  bulletins        Bulletin[]
+  tasks            Task[]
+}
+
+model SpaceMember {
+  id        String    @id @default(uuid())
+  spaceId   String
+  agentId   String
+  role      SpaceRole @default(MEMBER)
+  joinedAt  DateTime  @default(now())
+  space     Space     @relation(fields: [spaceId], references: [id])
+  agent     AgentAccount @relation(fields: [agentId], references: [id])
+
+  @@unique([spaceId, agentId])
+}
+
+model Group {
+  id          String    @id @default(uuid())
+  spaceId     String
+  name        String
+  description String?
+  createdAt   DateTime  @default(now())
+  space       Space     @relation(fields: [spaceId], references: [id])
+  members     GroupMember[]
+  posts       Post[]
+}
+
+model GroupMember {
+  id       String   @id @default(uuid())
+  groupId  String
+  agentId  String
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime @default(now())
+  group    Group    @relation(fields: [groupId], references: [id])
+  agent    AgentAccount @relation(fields: [agentId], references: [id])
+
+  @@unique([groupId, agentId])
+}
+
+model FriendEdge {
+  id          String       @id @default(uuid())
+  fromAgentId String
+  toAgentId   String
+  scopes      String[]
+  trustLevel  Int          @default(1)
+  status      FriendStatus @default(PENDING)
+  expiresAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  fromAgent   AgentAccount @relation("FriendFrom", fields: [fromAgentId], references: [id])
+  toAgent     AgentAccount @relation("FriendTo", fields: [toAgentId], references: [id])
+
+  @@unique([fromAgentId, toAgentId])
+}
+
+model Top8 {
+  id      String       @id @default(uuid())
+  agentId String       @unique
+  agent   AgentAccount @relation(fields: [agentId], references: [id])
+  entries Top8Entry[]
+}
+
+model Top8Entry {
+  id       String       @id @default(uuid())
+  top8Id   String
+  agentId  String
+  order    Int
+  top8     Top8         @relation(fields: [top8Id], references: [id])
+  agent    AgentAccount @relation(fields: [agentId], references: [id])
+
+  @@unique([top8Id, order])
+}
+
+model Post {
+  id             String       @id @default(uuid())
+  authorAgentId  String
+  spaceId        String?
+  groupId        String?
+  contentMarkdown String
+  visibility     Visibility   @default(PUBLIC)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  authorAgent    AgentAccount @relation(fields: [authorAgentId], references: [id])
+  space          Space?       @relation(fields: [spaceId], references: [id])
+  group          Group?       @relation(fields: [groupId], references: [id])
+  comments       Comment[]
+  attachments    PostAttachment[]
+}
+
+model PostAttachment {
+  id        String  @id @default(uuid())
+  postId    String
+  url       String
+  name      String
+  mimeType  String
+  size      Int
+  post      Post    @relation(fields: [postId], references: [id])
+}
+
+model Comment {
+  id             String       @id @default(uuid())
+  postId         String
+  authorAgentId  String
+  contentMarkdown String
+  createdAt      DateTime     @default(now())
+  post           Post         @relation(fields: [postId], references: [id])
+  authorAgent    AgentAccount @relation(fields: [authorAgentId], references: [id])
+}
+
+model Bulletin {
+  id             String       @id @default(uuid())
+  spaceId        String
+  authorAgentId  String
+  contentMarkdown String
+  pinnedUntil    DateTime?
+  createdAt      DateTime     @default(now())
+  space          Space        @relation(fields: [spaceId], references: [id])
+  authorAgent    AgentAccount @relation(fields: [authorAgentId], references: [id])
+}
+
+model DMThread {
+  id           String       @id @default(uuid())
+  createdAt    DateTime     @default(now())
+  participants DMThreadParticipant[]
+  messages     DMMessage[]
+}
+
+model DMThreadParticipant {
+  id         String       @id @default(uuid())
+  threadId   String
+  agentId    String
+  lastReadAt DateTime?
+  thread     DMThread     @relation(fields: [threadId], references: [id])
+  agent      AgentAccount @relation(fields: [agentId], references: [id])
+
+  @@unique([threadId, agentId])
+}
+
+model DMMessage {
+  id             String       @id @default(uuid())
+  threadId       String
+  senderAgentId  String
+  contentMarkdown String
+  createdAt      DateTime     @default(now())
+  thread         DMThread     @relation(fields: [threadId], references: [id])
+  sender         AgentAccount @relation("DMSender", fields: [senderAgentId], references: [id])
+}
+
+model Task {
+  id              String       @id @default(uuid())
+  requesterAgentId String
+  assigneeAgentId  String?
+  spaceId         String?
+  intent          String
+  requiredScopes  String[]
+  status          TaskStatus   @default(PENDING)
+  idempotencyKey  String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  requester       AgentAccount @relation("TaskRequester", fields: [requesterAgentId], references: [id])
+  assignee        AgentAccount? @relation("TaskAssignee", fields: [assigneeAgentId], references: [id])
+  space           Space?       @relation(fields: [spaceId], references: [id])
+  approvals       ApprovalRequest[]
+
+  @@unique([requesterAgentId, idempotencyKey])
+}
+
+model Trace {
+  id             String       @id @default(uuid())
+  agentId        String
+  summaryPublic  String
+  detailsPrivate Json?
+  redactionMeta  Json?
+  createdAt      DateTime     @default(now())
+  agent          AgentAccount @relation(fields: [agentId], references: [id])
+  events         TraceEvent[]
+}
+
+model TraceEvent {
+  id          String   @id @default(uuid())
+  traceId     String
+  type        String
+  payloadJson Json
+  createdAt   DateTime @default(now())
+  trace       Trace    @relation(fields: [traceId], references: [id])
+}
+
+model Skill {
+  id                 String                 @id @default(uuid())
+  name               String
+  description        String
+  manifest           Json
+  permissions        String[]
+  publisherId        String
+  version            String
+  signature          String
+  verificationStatus SkillVerificationStatus @default(UNVERIFIED)
+  reviewStatus       ReviewStatus           @default(PENDING)
+  createdAt          DateTime               @default(now())
+  publisher          Publisher              @relation(fields: [publisherId], references: [id])
+  installs           SkillInstall[]
+}
+
+model Publisher {
+  id        String   @id @default(uuid())
+  name      String
+  publicKey String
+  createdAt DateTime @default(now())
+  skills    Skill[]
+}
+
+model SkillInstall {
+  id          String       @id @default(uuid())
+  agentId     String
+  skillId     String
+  installedAt DateTime     @default(now())
+  agent       AgentAccount @relation(fields: [agentId], references: [id])
+  skill       Skill        @relation(fields: [skillId], references: [id])
+
+  @@unique([agentId, skillId])
+}
+
+model ApprovalRequest {
+  id          String         @id @default(uuid())
+  agentId     String
+  taskId      String?
+  scopes      String[]
+  status      ApprovalStatus @default(PENDING)
+  actorUserId String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  agent       AgentAccount   @relation("ApprovalTarget", fields: [agentId], references: [id])
+  task        Task?          @relation(fields: [taskId], references: [id])
+  actorUser   UserAccount?   @relation("ApprovalActor", fields: [actorUserId], references: [id])
+}
+
+model AuditLog {
+  id           String       @id @default(uuid())
+  actorType    String
+  actorUserId  String?
+  actorAgentId String?
+  action       String
+  targetType   String?
+  targetId     String?
+  data         Json?
+  ip           String?
+  createdAt    DateTime     @default(now())
+  actorUser    UserAccount? @relation("UserActor", fields: [actorUserId], references: [id])
+  actorAgent   AgentAccount? @relation("AgentActor", fields: [actorAgentId], references: [id])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  agentId   String
+  type      NotificationType
+  data      Json
+  createdAt DateTime         @default(now())
+  readAt    DateTime?
+  agent     AgentAccount     @relation(fields: [agentId], references: [id])
+}
+
+model Testimonial {
+  id              String       @id @default(uuid())
+  agentId         String
+  authorAgentId   String
+  contentMarkdown String
+  evidenceTraceId String?
+  createdAt       DateTime     @default(now())
+  agent           AgentAccount @relation("TestimonialTarget", fields: [agentId], references: [id])
+  author          AgentAccount @relation("TestimonialAuthor", fields: [authorAgentId], references: [id])
+}
+
+model Job {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  schedule  String
+  active    Boolean   @default(true)
+  lastRunAt DateTime?
+  nextRunAt DateTime?
+  runs      JobRun[]
+}
+
+model JobRun {
+  id         String   @id @default(uuid())
+  jobId      String
+  startedAt  DateTime @default(now())
+  finishedAt DateTime?
+  status     JobStatus?
+  output     Json?
+  job        Job      @relation(fields: [jobId], references: [id])
+}
+
+model RateLimit {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  windowStart DateTime
+  count       Int
+}
