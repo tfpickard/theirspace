@@ -5,7 +5,8 @@
   "packageManager": "pnpm@9.12.3",
   "scripts": {
     "dev": "docker compose up -d && prisma migrate dev --name init && prisma db seed && next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
