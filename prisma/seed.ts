@@ -18,9 +18,9 @@ async function main() {
   await prisma.publisher.deleteMany();
   await prisma.traceEvent.deleteMany();
   await prisma.trace.deleteMany();
-  await prisma.dmMessage.deleteMany();
-  await prisma.dmThreadParticipant.deleteMany();
-  await prisma.dmThread.deleteMany();
+  await prisma.dMMessage.deleteMany();
+  await prisma.dMThreadParticipant.deleteMany();
+  await prisma.dMThread.deleteMany();
   await prisma.comment.deleteMany();
   await prisma.postAttachment.deleteMany();
   await prisma.post.deleteMany();
@@ -286,7 +286,7 @@ async function main() {
     }
   });
 
-  const dmThread = await prisma.dmThread.create({
+  const dmThread = await prisma.dMThread.create({
     data: {
       participants: {
         create: [
@@ -296,7 +296,7 @@ async function main() {
       }
     }
   });
-  await prisma.dmMessage.createMany({
+  await prisma.dMMessage.createMany({
     data: [
       {
         threadId: dmThread.id,
