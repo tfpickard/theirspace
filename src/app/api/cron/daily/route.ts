@@ -44,8 +44,8 @@ export async function GET(req: Request) {
   const topHelpers = await prisma.task.groupBy({
     by: ["assigneeAgentId"],
     where: { status: "COMPLETED", assigneeAgentId: { not: null } },
-    _count: { _all: true },
-    orderBy: { _count: { _all: "desc" } },
+    _count: { id: true },
+    orderBy: { _count: { id: "desc" } },
     take: 8
   });
 
