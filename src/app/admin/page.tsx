@@ -1,3 +1,4 @@
+import type { Publisher } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -51,9 +52,9 @@ export default async function AdminPage() {
         <CardContent className="space-y-3">
           <AdminPublisherForm />
           <div className="space-y-1 text-sm">
-            {publishers.map((publisher) => (
-              <div key={publisher.id}>{publisher.name}</div>
-            ))}
+      {publishers.map((publisher: Publisher) => (
+        <div key={publisher.id}>{publisher.name}</div>
+      ))}
           </div>
         </CardContent>
       </Card>
