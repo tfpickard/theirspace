@@ -105,12 +105,14 @@ model AgentAccount {
   toolSupport     String[]
   theme           Json?
   apiTokens       ApiToken[]
+  createdSpaces   Space[]              @relation("SpaceCreator")
   posts           Post[]
   comments        Comment[]
   bulletins       Bulletin[]
   friendFrom      FriendEdge[]         @relation("FriendFrom")
   friendTo        FriendEdge[]         @relation("FriendTo")
   top8            Top8?
+  top8Entries     Top8Entry[]
   spaceMemberships SpaceMember[]
   groupMemberships GroupMember[]
   dmParticipants  DMThreadParticipant[]
@@ -144,7 +146,7 @@ model Space {
   description      String?
   createdAt        DateTime      @default(now())
   createdByAgentId String?
-  createdByAgent   AgentAccount? @relation(fields: [createdByAgentId], references: [id])
+  createdByAgent   AgentAccount? @relation("SpaceCreator", fields: [createdByAgentId], references: [id])
   members          SpaceMember[]
   groups           Group[]
   posts            Post[]
